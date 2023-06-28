@@ -1,0 +1,32 @@
+---
+  title: "Diabetics_Vector_And_Matrix"
+author: "ss4230@scarletmail.rutgers.edu"
+date: "02/26/2023"
+output: html_document
+
+library(readr)
+diabetes <- read_csv("C:/Users/Shruti Sontakke/Downloads/archive (4)/diabetes.csv")
+attach(diabetes)
+str(diabetes)
+
+#Separating two matrices as survived and not survived
+diabetic <- subset(diabetes, Outcome == 'D')
+diabetic
+nondiabetic <- subset(diabetes, Outcome == 'ND')
+nondiabetic
+
+#Calculating colMeans
+diabetic.num <- diabetic[,-1]
+colMeans(diabetic.num)
+
+nondiabetic.num <- nondiabetic[,-1]
+colMeans(nondiabetic.num)
+
+#Creating Covariance matrices 
+cov(diabetic.num)
+cov(nondiabetic.num)
+
+#Creating correlation matrices
+cor(diabetic.num)
+cor(nondiabetic.num)
+

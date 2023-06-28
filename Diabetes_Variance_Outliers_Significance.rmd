@@ -1,0 +1,143 @@
+---
+title: "Diabetes_Variance_Outliers_Significance"
+author: "ss4230@scarletmail.rutgers.edu"
+date: "2/26/2023"
+output: html_document
+---
+  
+  ```{r}
+
+library(readr)
+diabetes <- read_csv("C:/Users/Shruti Sontakke/Downloads/archive (4)/diabetes.csv")
+attach(diabetes)
+str(diabetes)
+diabetes$Outcome <- as.factor(diabetes$Outcome)
+diabetes_x <- diabetes[, 2:8]
+diabetes_x
+diabetes_cm <- colMeans(diabetes_x)
+diabetes_S <- cov(diabetes_x)
+diabetes_d <- apply(diabetes_x, MARGIN = 1, function(diabetes_x)t(diabetes_x - diabetes_cm) %*% solve(diabetes_S) %*% (diabetes_x - diabetes_cm))
+diabetes_cm
+diabetes_S
+diabetes_d
+
+# t-tests, one by one. Survivors vs. Non survivors
+with(data=diabetes,t.test(Pregnancies[Outcome=="D"],Pregnancies[Outcome=="ND"],var.equal=TRUE))
+with(data=diabetes,t.test(BloodPressure[Outcome=="D"],BloodPressure[Outcome=="ND"],var.equal=TRUE))
+with(data=diabetes,t.test(SkinThickness[Outcome=="D"],SkinThickness[Outcome=="ND"],var.equal=TRUE))
+with(data=diabetes,t.test(Insulin[Outcome=="D"],Insulin[Outcome=="ND"],var.equal=TRUE))
+with(data=diabetes,t.test(BMI[Outcome=="D"],BMI[Outcome=="ND"],var.equal=TRUE))
+with(data=diabetes,t.test(DiabetesPedigreeFunction[Outcome=="D"],DiabetesPedigreeFunction[Outcome=="ND"],var.equal=TRUE))
+with(data=diabetes,t.test(Age[Outcome=="D"],Age[Outcome=="ND"],var.equal=TRUE))
+
+
+library(Hotelling)
+t2test <- hotelling.test(Pregnancies + BloodPressure + SkinThickness + Insulin + BMI + DiabetesPedigreeFunction + Age ~ Outcome, data=diabetes)
+# Output of the function hotelling.test is given
+cat("T2 statistic =",t2test$stat[[1]],"\n")
+print(t2test)
+#  T2 statistic is located in the first element of the list "stat"
+
+# testing Variation
+# F-test for Total length (not recommended)
+var.test(Pregnancies[Outcome=="D"],Pregnancies[Outcome=="ND"])
+attach(diabetes)
+var.test(Pregnancies[Outcome=="D"],Pregnancies[Outcome=="ND"])
+
+# Levene's tests based on absolute differences around means using t-tests. Standarizing the sparrows data set with scale()
+
+matstand <- scale(diabetes[,2:9])
+matstand
+matd <- matstand[Outcome == "D",]
+matd
+matnd <- matstand[Outcome == "ND",]
+vecmediand <- apply(matd, 2, median)
+# in the above 2 represents column. Hence, we are asking for column median
+vecmediand
+
+vecmediannd <- apply(matnd, 2, median)
+matabsdevd <- abs(matd - matrix(rep(vecmediand,nrow(matd)),nrow=nrow(matd), byrow=TRUE))
+
+matabsdevnd <- abs(matnd - matrix(rep(vecmediannd,nrow(matnd)),nrow=nrow(matnd), byrow=TRUE))
+
+matabsdevnd
+
+matabsdev.all <- rbind(matabsdevd,matabsdevnd)
+matabsdev.all <- data.frame(Outcome, matabsdev.all)
+matabsdev.all
+
+t.test(matabsdev.all$Pregnancies[Outcome == "D"],matabsdev.all$Pregnancies[Outcome == "ND"], alternative="less",var.equal = TRUE)
+t.test(matabsdev.all$BloodPressure[Outcome == "D"],matabsdev.all$BloodPressure[Outcome == "ND"], alternative="less",var.equal = TRUE)
+t.test(matabsdev.all$SkinThickness[Outcome == "D"],matabsdev.all$SkinThickness[Outcome == "ND"], alternative="less",var.equal = TRUE)
+t.test(matabsdev.all$Insulin[Outcome == "D"],matabsdev.all$Insulin[Outcome == "ND"], alternative="less",var.equal = TRUE)
+t.test(matabsdev.all$BMI[Outcome =="D"],matabsdev.all$BMI[Outcome == "ND"], alternative="less",var.equal = TRUE)
+t.test(matabsdev.all$DiabetesPedigreeFunction[Outcome =="D"],matabsdev.all$DiabetesPedigreeFunction[Outcome == "ND"], alternative="less",var.equal = TRUE)
+t.test(matabsdev.all$Age[Outcome =="D"],matabsdev.all$Age[Outcome == "ND"], alternative="less",var.equal = TRUE)
+
+matstand
+
+matstand.all <- data.frame(Outcome, matstand)
+colnames(matstand.all) <- colnames(diabetes[1:8])
+t2test <- hotelling.test(Pregnancies + BloodPressure + SkinThickness + Insulin + BMI + DiabetesPedigreeFunction + Age ~ Outcome, data=matstand.all)
+cat("T2 statistic =",t2test$stat[[1]],"\n")
+print(t2test)
+
+# In the above we standardized using scale function
+matabsdev.all
+
+# We can also look at Van Valen's test. Equivalent to the comparison of mean absolute median
+# diferences between two groups. In the sparrows' example, the Van Valen's test
+# is one-sided (Mean dij for survivors < Mean dij for non-survivors)
+# dij is the norm of the individual vector i composed by the absolute
+# deviations computed for all the variables in sample j.
+# These norms define the second column of the data frame d.all
+
+d.all <- data.frame(Outcome,sqrt(rowSums(matabsdev.all[,-1]^2)))
+d.all
+colnames(d.all)[2] <- "dij"
+d.all
+head(d.all)
+with(d.all, t.test(dij[Outcome=="D"], dij[Outcome=="ND"],var.equal=TRUE, alternative="less"))
+sprintf("d-values for Diabetes: Mean = %2.3f, Variance = %2.3f",mean(d.all$dij[Outcome=="D"]),var(d.all$dij[Outcome=="D"]))
+sprintf("d-values for Non-Diabetes: Mean = %2.3f, Variance = %2.3f",mean(d.all$dij[Outcome=="ND"]),var(d.all$dij[Outcome=="ND"]))
+# Hotelling Test
+
+
+# Leverne test is used to verify Homoscedasticity. It tests if the variance of two samples are # #equal. Levene's test is an inferential statistic used to assess the equality of variances for a #variable calculated for two or more groups.[1] Some common statistical procedures assume that #variances of the populations from which different samples are drawn are equal. Levene's test #assesses this assumption.
+
+library(car)
+leveneTest(Pregnancies ~ Outcome, data=diabetes)
+#leveneTest() produces a two-sided test
+leveneTest(BloodPressure ~ Outcome, data=diabetes)
+leveneTest(SkinThickness ~ Outcome, data=diabetes)
+leveneTest(Insulin ~ Outcome, data=diabetes)
+leveneTest(BMI ~ Outcome, data=diabetes)
+leveneTest(DiabetesPedigreeFunction ~ Outcome, data=diabetes)
+leveneTest(Age ~ Outcome, data=diabetes)
+
+
+
+# ANOVA
+summary(aov(Pregnancies ~ Outcome))
+summary(aov(BloodPressure ~ Outcome))
+summary(aov(SkinThickness ~ Outcome))
+summary(aov(Insulin ~ Outcome))
+summary(aov(BMI ~ Outcome))
+summary(aov(DiabetesPedigreeFunction ~ Outcome, data=diabetes))
+summary(aov(Age ~ Outcome, data=diabetes))
+# mahalanobis
+library(stats)
+
+diabetes_MD <- mahalanobis(diabetes_x, diabetes_cm, diabetes_S)
+diabetes_MD
+diabetes$pvalues <- pchisq(diabetes_MD, df=3, lower.tail=FALSE)
+diabetes
+
+# BoxM
+
+library(biotools)
+boxM(diabetes[,2:6],Outcome)
+
+# MANOVA
+summary(manova(as.matrix(diabetes[,-1])~ Outcome))
+```

@@ -1,0 +1,101 @@
+---
+title: "Diabetes_Scatterplot and ggplot"
+author: "ss4230@scarletmail.rutgers.edu"
+date: "2/26/2023"
+output: html_document
+---
+  
+  ```{r}
+
+
+library(readr)
+diabetes <- read_csv("C:/Users/Shruti Sontakke/Downloads/archive (4)/diabetes.csv")
+attach(diabetes)
+str(diabetes)
+boxplot(diabetes[,2:6])
+stars(diabetes,labels = diabetes$Outcome)
+
+# load packages
+library(lattice)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+
+#Plots
+diabetic.p<- data.frame(as.numeric(rownames(diabetes)),diabetes[,2:8])
+labs.diagonal <- c("Pregnancies","Glucose","BloodPressure","SkinThickness","Insulin","BMI","DiabetesPedigreeFunction","Age")
+plot(Pregnancies, Glucose,xlab="Pregnancies",ylab="BloodPressure",pch=c(16,1))
+
+attach(diabetes)
+
+# Scatter Plot Matrix
+library(car)
+scatterplotMatrix(~Pregnancies+Glucose+BloodPressure+SkinThickness+Insulin+BMI+DiabetesPedigreeFunction+Age | Outcome, data=diabetic.p, var.labels=labs.diagonal,cex.labels=0.7, diagonal="boxplot",smooth=FALSE,reg.line=FALSE,pch=c(1,16),col=rep("black",2), legend.plot=FALSE)
+
+# ggplot
+ggplot(diabetes, aes(x=Glucose,y=BloodPressure)) + geom_point()
+
+ggplot(diabetes, aes(x=BloodPressure,y=Pregnancies)) + facet_wrap(~Outcome) + geom_point()
+
+# bar chart
+ggplot(diabetes, aes(x=Pregnancies) )+ geom_bar(position="stack",fill='green')
+ggplot(diabetes, aes(x=Pregnancies, fill=Outcome)) + geom_bar()+theme_bw()
+
+# histogram
+ggplot(diabetes, aes(SkinThickness))+geom_histogram(bins=10)
+ggplot(diabetes, aes(SkinThickness))+geom_histogram(aes(fill = after_stat(count)))
+
+#regression
+ggplot(diabetes, aes(x=Pregnancies, y=BloodPressure)) + geom_point() + geom_smooth(method=lm)
+ggplot(diabetes, aes(x=Pregnancies, y=BloodPressure)) + geom_point() + stat_smooth()
+ggplot(diabetes, aes(x=Pregnancies, y=BloodPressure)) + geom_point() + stat_smooth()
+
+# violin plot 
+ggplot(diabetes, aes(x=Pregnancies,y=DiabetesPedigreeFunction)) + geom_violin()
+ggplot(diabetes, aes(x=Pregnancies, y=Age)) + geom_violin()
+ggplot(diabetes, aes(x=DiabetesPedigreeFunction, y=Age)) + geom_violin()
+
+# box plot
+ggplot(diabetes, aes(x=Outcome, y=Pregnancies)) + geom_boxplot()
+ggplot(diabetes, aes(x=Outcome, y=Pregnancies)) + geom_boxplot() + coord_flip()
+
+# density plot and ggridges
+ggplot(diabetes, aes(x=BMI)) + geom_density() 
+
+ggplot(diabetes, aes(x=Pregnancies, y=Outcome)) + geom_density_ridges() 
+
+# hexbin
+ggplot(diabetes, aes(x=Pregnancies, y=Insulin)) + geom_hex() 
+
+# with ggthemes (see also ggsci, ggthemr)
+lastplot <- ggplot(diabetes, aes(x=Pregnancies,y=Age)) + xlim(0,3) + geom_point() + stat_smooth() + labs(x="Pregnancies", y="Age", title="Diabetes Data") 
+lastplot + theme_bw()
+lastplot + theme_cowplot()
+lastplot + theme_dark()
+lastplot + theme_economist()
+lastplot + theme_fivethirtyeight()
+lastplot + theme_tufte()
+lastplot + theme_wsj()
+
+
+
+
+
+
+
+
+
+
+
+
+
+

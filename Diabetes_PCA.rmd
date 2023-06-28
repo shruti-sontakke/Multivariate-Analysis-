@@ -1,0 +1,308 @@
+---
+title: "Diabetes_PCA"
+author: "ss4230@scarletmail.rutgers.edu"
+date: "2/26/2023"
+output: html_document
+---
+  
+  ```{r}
+
+library(readr)
+diabetes <- read_csv("C:/Users/Shruti Sontakke/Downloads/archive (4)/diabetes.csv")
+attach(diabetes)
+str(diabetes)
+#Get the Correlations between the measurements
+cor(diabetes[-1])
+# Using prcomp to compute the principal components (eigenvalues and eigenvectors). With scale=TRUE, variable means are set to zero, and variances set to one
+diabetes_pca <- prcomp(diabetes[,-1],scale=TRUE)
+diabetes_pca
+summary(diabetes_pca)
+# sample scores stored in sparrows_pca$x
+# singular values (square roots of eigenvalues) stored in sparrow_pca$sdev
+# loadings (eigenvectors) are stored in sparrows_pca$rotation
+# variable means stored in sparrows_pca$center
+# variable standard deviations stored in sparrows_pca$scale
+# A table containing eigenvalues and %'s accounted, follows
+# Eigenvalues are sdev^2
+(eigen_diabetes <- diabetes_pca$sdev^2)
+names(eigen_diabetes) <- paste("PC",1:8,sep="")
+eigen_diabetes
+sumlambdas <- sum(eigen_diabetes)
+sumlambdas
+propvar <- eigen_diabetes/sumlambdas
+propvar
+cumvar_diabetes <- cumsum(propvar)
+cumvar_diabetes
+matlambdas <- rbind(eigen_diabetes,propvar,cumvar_diabetes)
+rownames(matlambdas) <- c("Eigenvalues","Prop. variance","Cum. prop. variance")
+round(matlambdas,4)
+summary(diabetes_pca)
+diabetes_pca$rotation
+print(diabetes_pca)
+## Sample scores stored in sparrow_pca$x
+diabetes_pca$x
+# Identifying the scores by their survival status
+diabetestyp_pca <- cbind(data.frame(Outcome),diabetes_pca$x)
+diabetestyp_pca
+# Means of scores for all the PC's classified by Survival status
+tabmeansPC <- aggregate(diabetestyp_pca[,2:9],by=list(Outcome=diabetes$Outcome),mean)
+tabmeansPC
+tabmeansPC <- tabmeansPC[rev(order(tabmeansPC$Outcome)),]
+tabmeansPC
+tabfmeans <- t(tabmeansPC[,-1])
+tabfmeans
+colnames(tabfmeans) <- t(as.vector(tabmeansPC[1]$Outcome))
+tabfmeans
+# Standard deviations of scores for all the PC's classified by Survival status
+tabsdsPC <- aggregate(diabetestyp_pca[,2:9],by=list(Outcome=diabetes$Outcome),sd)
+tabfsds <- t(tabsdsPC[,-1])
+colnames(tabfsds) <- t(as.vector(tabsdsPC[1]$Outcome))
+tabfsds
+t.test(PC1~diabetes$Outcome,data=diabetestyp_pca)
+t.test(PC2~diabetes$Outcome,data=diabetestyp_pca)
+t.test(PC3~diabetes$Outcome,data=diabetestyp_pca)
+t.test(PC4~diabetes$Outcome,data=diabetestyp_pca)
+t.test(PC5~diabetes$Outcome,data=diabetestyp_pca)
+t.test(PC6~diabetes$Outcome,data=diabetestyp_pca)
+t.test(PC7~diabetes$Outcome,data=diabetestyp_pca)
+t.test(PC8~diabetes$Outcome,data=diabetestyp_pca)
+
+
+## F ratio tests
+var.test(PC1~diabetes$Outcome,data=diabetestyp_pca)
+var.test(PC2~diabetes$Outcome,data=diabetestyp_pca)
+var.test(PC3~diabetes$Outcome,data=diabetestyp_pca)
+var.test(PC4~diabetes$Outcome,data=diabetestyp_pca)
+var.test(PC5~diabetes$Outcome,data=diabetestyp_pca)
+var.test(PC6~diabetes$Outcome,data=diabetestyp_pca)
+var.test(PC7~diabetes$Outcome,data=diabetestyp_pca)
+var.test(PC8~diabetes$Outcome,data=diabetestyp_pca)
+
+# Levene's tests (one-sided)
+library(car)
+(LTPC1 <- leveneTest(PC1~diabetes$Outcome,data=diabetestyp_pca))
+(p_PC1_1sided <- LTPC1[[3]][1]/2)
+(LTPC2 <- leveneTest(PC2~diabetes$Outcome,data=diabetestyp_pca))
+(p_PC2_1sided=LTPC2[[3]][1]/2)
+(LTPC3 <- leveneTest(PC3~diabetes$Outcome,data=diabetestyp_pca))
+(p_PC3_1sided <- LTPC3[[3]][1]/2)
+(LTPC4 <- leveneTest(PC4~diabetes$Outcome,data=diabetestyp_pca))
+(p_PC4_1sided <- LTPC4[[3]][1]/2)
+(LTPC5 <- leveneTest(PC5~diabetes$Outcome,data=diabetestyp_pca))
+(p_PC5_1sided <- LTPC5[[3]][1]/2)
+(LTPC6 <- leveneTest(PC6~diabetes$Outcome,data=diabetestyp_pca))
+(p_PC6_1sided <- LTPC6[[3]][1]/2)
+(LTPC7 <- leveneTest(PC7~diabetes$Outcome,data=diabetestyp_pca))
+(p_PC7_1sided <- LTPC7[[3]][1]/2)
+(LTPC8 <- leveneTest(PC8~diabetes$Outcome,data=diabetestyp_pca))
+(p_PC8_1sided <- LTPC8[[3]][1]/2)
+
+# Plotting the scores for the first and second components
+plot(diabetestyp_pca$PC1, diabetestyp_pca$PC2,pch=ifelse(diabetestyp_pca$Outcome == "S",1,16),xlab="PC1", ylab="PC2", main="768 Patients against values for PC1 & PC2")
+abline(h=0)
+abline(v=0)
+legend("bottomleft", legend=c("Diabetic","Non-Diabetic"), pch=c(1,16))
+plot(eigen_diabetes, xlab = "Component number", ylab = "Component variance", type = "l", main = "Scree diagram")
+plot(log(eigen_diabetes), xlab = "Component number",ylab = "log(Component variance)", type="l",main = "Log(eigenvalue) diagram")
+print(summary(diabetes_pca))
+diag(cov(diabetes_pca$x))
+xlim <- range(diabetes_pca$x[,1])
+diabetes_pca$x[,1]
+diabetes_pca$x
+plot(diabetes_pca$x,xlim=xlim,ylim=xlim)
+diabetes_pca$rotation[,1]
+diabetes_pca$rotation
+plot(diabetes[,-1])
+diabetes_pca$x
+plot(diabetes_pca)
+
+#get the original value of the data based on PCA
+center <- diabetes_pca$center
+scale <- diabetes_pca$scale
+new_diabetes <- as.matrix(diabetes[,-1])
+new_diabetes
+drop(scale(new_diabetes,center=center, scale=scale)%*%diabetes_pca$rotation[,1])
+predict(diabetes_pca)[,1]
+
+#The aboved two gives us the same thing. predict is a good function to know.
+diabetes$Outcome <- as.factor(diabetes$Outcome)
+out <- sapply(1:8, function(i){plot(diabetes$Outcome,diabetes_pca$x[,i],xlab=paste("PC",i,sep=""),ylab="Outcome")})
+pairs(diabetes_pca$x[,1:8], ylim = c(-6,4),xlim = c(-6,4),panel=function(x,y,...){text(x,y,diabetes$Outcome)})
+
+# Better Ways to Visualize
+
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(devtools)
+
+# Correlation
+pairs.panels(diabetes[,-1],gap = 0,bg = c("red", "blue")[diabetes$Outcome],pch=21)
+pairs.panels(diabetes_pca$x,gap=0,bg = c("red", "blue")[diabetes$Outcome],pch=21)
+
+fviz_eig(diabetes_pca, addlabels = TRUE)
+fviz_pca_var(diabetes_pca,col.var = "cos2", gradient.cols = c("#FFCC00", "#CC9933", "#660033", "#330033"),repel = TRUE)
+fviz_pca_ind(diabetes_pca, col.ind = "cos2", gradient.cols = c("#FFCC00", "#CC9933", "#660033", "#330033"),repel = TRUE)
+biplot(diabetes_pca)
+autoplot(diabetes_pca,data = diabetes[,-1],loadings = TRUE,labels = diabetes$Outcome)
+
+# Different PCA Method. 
+res.pca<- PCA(diabetes[,-1], graph = FALSE)
+print(res.pca)
+# Visualize and Interpret PCA using these functions 
+
+#get_eigenvalue(res.pca): Extract the eigenvalues/variances of principal components
+#fviz_eig(res.pca): Visualize the eigenvalues
+#get_pca_ind(res.pca), get_pca_var(res.pca): Extract the results for individuals and variables, respectively.
+#fviz_pca_ind(res.pca), fviz_pca_var(res.pca): Visualize the results individuals and variables, respectively.
+#fviz_pca_biplot(res.pca): Make a biplot of individuals and variables.
+
+eig.val<- get_eigenvalue(res.pca)
+eig.val
+
+fviz_eig(res.pca, addlabels = TRUE, ylim = c(0, 50))
+
+var<- get_pca_var(res.pca)
+var
+var$coord
+var$cos2
+head(var$coord,8)
+#var$coord: coordinates of variables to create a scatter plot
+#var$cos2: represents the quality of representation for variables on the factor map. It’s calculated as the squared coordinates: var.cos2 = var.coord * var.coord.
+#var$contrib: contains the contributions (in percentage) of the variables to the principal components. 
+#The contribution of a variable (var) to a given principal component is (in percentage) : (var.cos2 * 100) / (total cos2 of the component).
+var
+
+# Coordinates
+head(var$coord,8)
+# Cos2: quality on the factore map
+head(var$cos2,8)
+# Contributions to the principal components
+head(var$contrib,8)
+
+#The plot Below is also known as variable correlation plots. It shows the relationships between all variables. It can be interpreted as follow:
+
+#Positively correlated variables are grouped together.
+#Negatively correlated variables are positioned on opposite sides of the plot origin (opposed quadrants).
+#The distance between variables and the origin measures the quality of the variables on the factor map. 
+#Variables that are away from the origin are well represented on the factor map.
+
+# Correlation circle
+fviz_pca_var(res.pca, col.var = "black")
+
+# Quality of representation
+
+
+corrplot(var$cos2, is.corr=FALSE)
+
+# Total cos2 of variables on Dim.1 and Dim.2
+#A high cos2 indicates a good representation of the variable on the principal component. 
+#In this case the variable is positioned close to the circumference of the correlation circle.
+#A low cos2 indicates that the variable is not perfectly represented by the PCs. 
+#In this case the variable is close to the center of the circle.
+
+fviz_cos2(res.pca, choice = "var", axes = 1:2)
+fviz_pca_var(res.pca, col.var = "cos2",gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE) # Avoid text overlapping
+
+# Change the transparency by cos2 values
+fviz_pca_var(res.pca, alpha.var = "cos2")
+corrplot(var$contrib, is.corr=FALSE)
+# Contributions of variables to PC1
+fviz_contrib(res.pca, choice = "var", axes = 1, top = 10)
+# Contributions of variables to PC2
+fviz_contrib(res.pca, choice = "var", axes = 2, top = 10)
+fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+fviz_pca_var(res.pca, alpha.var = "contrib")
+
+fviz_pca_ind(res.pca,geom.ind = "point",col.ind = diabetes$Outcome, palette = c("#00AFBB", "#E7B800", "#FC4E07"),addEllipses = TRUE, legend.title = "Groups")
+
+
+# Description of PC
+
+res.desc <- dimdesc(res.pca, axes = c(1,2,3,4,5), proba = 0.06)
+# Description of dimension 1
+res.desc$Dim.1
+res.desc$Dim.2
+res.desc$Dim.3
+res.desc$Dim.4
+res.desc$Dim.5
+
+
+# Graph of Indiviuals
+ind <- get_pca_ind(res.pca)
+ind
+
+## Principal Component Analysis Results for individuals
+##  ===================================================
+##   Name       Description                       
+## 1 "$coord"   "Coordinates for the individuals" 
+## 2 "$cos2"    "Cos2 for the individuals"        
+## 3 "$contrib" "contributions of the individuals"
+#To get access to the different components, use this:
+
+# Coordinates of individuals
+head(ind$coord,8)
+# Quality of individuals
+head(ind$cos2,8)
+# Contributions of individuals
+head(ind$contrib,8)
+
+fviz_pca_ind(res.pca)
+
+fviz_pca_ind(res.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)# Avoid text overlapping (slow if many points)
+
+fviz_pca_ind(res.pca, pointsize = "cos2", pointshape = 21, fill = "#E7B800",repel = TRUE) # Avoid text overlapping (slow if many points)
+
+
+fviz_pca_ind(res.pca, col.ind = "cos2", pointsize = "cos2",gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE) # Avoid text overlapping (slow if many points)
+
+fviz_cos2(res.pca, choice = "ind")
+
+# Total contribution on PC1 and PC2
+fviz_contrib(res.pca, choice = "ind", axes = 1:2)
+
+# Create a random continuous variable of length 23,
+# Same length as the number of active individuals in the PCA
+set.seed(123)
+my.cont.var <- rnorm(768)
+# Color individuals by the continuous variable
+fviz_pca_ind(res.pca, col.ind = my.cont.var,gradient.cols = c("blue", "yellow", "red"),legend.title = "Cont.Var")
+
+fviz_pca_ind(res.pca,geom.ind = "point",col.ind = diabetes$Outcome,palette = c("#00AFBB", "#E7B800", "#FC4E07"),addEllipses = TRUE, legend.title = "Groups")
+
+
+fviz_pca_ind(res.pca, geom.ind = "point", col.ind = diabetes$Outcome, palette = c("#00AFBB", "#E7B800", "#FC4E07"),addEllipses = TRUE, ellipse.type = "confidence",legend.title = "Groups")
+fviz_pca_ind(res.pca,label = "none", habillage = diabetes$Outcome, addEllipses = TRUE, palette = "jco")
+fviz_pca_var(res.pca, geom.var = c("point", "text"))
+
+# Show individuals text labels only
+fviz_pca_ind(res.pca, geom.ind =  "text")
+# Change the size of arrows an labels
+fviz_pca_var(res.pca, arrowsize = 1, labelsize = 5, repel = TRUE)
+# Change points size, shape and fill color
+# Change labelsize
+fviz_pca_ind(res.pca, pointsize = 3, pointshape = 21, fill = "lightblue",labelsize = 5, repel = TRUE)
+
+fviz_pca_ind(res.pca,geom.ind = "point",group.ind = diabetes$Outcome, legend.title = "Groups",mean.point = FALSE)
+fviz_pca_ind(res.pca,geom.ind = "point", group.ind = diabetes$Outcome, legend.title = "Groups",mean.point = TRUE)
+fviz_pca_var(res.pca, axes.linetype = "blank")
+
+
+
+ind.p <- fviz_pca_ind(res.pca, geom = "point", col.ind = diabetes$Outcome)
+ggpubr::ggpar(ind.p,title = "Principal Component Analysis",subtitle = "Iris data set",caption = "Source: factoextra",xlab = "PC1", ylab = "PC2",legend.title = "Outcome", legend.position = "top",ggtheme = theme_gray(), palette = "jco")
+
+fviz_pca_biplot(res.pca, repel = TRUE,col.ind = diabetes$Outcome,col.var = "#2E9FDF",) 
+
+
+fviz_pca_biplot(res.pca, col.ind = diabetes$Outcome, palette = "jco", addEllipses = TRUE, label = "var",col.var = "black", repel = TRUE,legend.title = "Outcome") 
+
+fviz_pca_biplot(res.pca, geom.ind = "point",pointshape = 21,pointsize = 2.5,fill.ind = diabetes$Outcome,col.ind = "black",legend.title = list(fill = "Outcome", color = "Clusters"),repel = TRUE)+ggpubr::fill_palette("jco")+ggpubr::color_palette("npg")      
+
+fviz_pca_biplot(res.pca, geom.ind = "point",fill.ind = diabetes$Outcome, col.ind = "black",pointshape = 21, pointsize = 2,palette = "jco",addEllipses = TRUE,alpha.var ="contrib", col.var = "contrib",gradient.cols = "RdYlBu",legend.title = list(fill = "Outcome", color = "Contrib",alpha = "Contrib"))
+
+## http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/
+
+```
